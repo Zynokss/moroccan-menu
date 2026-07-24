@@ -114,7 +114,7 @@ export default function KitchenDashboard() {
   );
 
   return (
-    <PinGate title="شاشة المطبخ">
+    <PinGate title="شاشة المطبخ" requiredPin={process.env.NEXT_PUBLIC_KITCHEN_PIN}>
       <main className="min-h-screen bg-zinc-950 text-zinc-100 p-4 sm:p-8 max-w-7xl mx-auto" dir="rtl">
         <header className="mb-8 flex justify-between items-center border-b border-zinc-800 pb-6">
           <div>

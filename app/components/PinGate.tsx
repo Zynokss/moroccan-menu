@@ -2,33 +2,40 @@
 
 import { useState, useEffect } from 'react';
 
-// Change this PIN to whatever you want for your staff!
-const STAFF_PIN = '5555';
-
 interface PinGateProps {
   children: React.ReactNode;
   title?: string;
+  requiredPin?: string; // <-- Add optional custom PIN prop
 }
 
-export default function PinGate({ children, title = 'Staff Access Required' }: PinGateProps) {
+export default function PinGate({ 
+  children, 
+  title = 'Staff Access Required',
+  requiredPin 
+}: PinGateProps) {
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // If a custom PIN isn't passed in, default to the main admin PIN environment variable
+  const activePin = requiredPin || process.env.NEXT_PUBLIC_ADMIN_PIN;
+
   useEffect(() => {
-    // Check if staff already logged in during this session
-    const authStatus = sessionStorage.getItem('staff_authenticated');
+    // Session key based on title/page so logging into Kitchen doesn't automatically unlock Admin
+    const sessionKey = `auth_${title.replace(/\s+/g, '_')}`;
+    const authStatus = sessionStorage.getItem(sessionKey);
     if (authStatus === 'true') {
       setIsAuthenticated(true);
     }
     setLoading(false);
-  }, []);
+  }, [title]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === STAFF_PIN) {
-      sessionStorage.setItem('staff_authenticated', 'true');
+    if (activePin && pin === activePin) {
+      const sessionKey = `auth_${title.replace(/\s+/g, '_')}`;
+      sessionStorage.setItem(sessionKey, 'true');
       setIsAuthenticated(true);
       setError(false);
     } else {
@@ -38,7 +45,8 @@ export default function PinGate({ children, title = 'Staff Access Required' }: P
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('staff_authenticated');
+    const sessionKey = `auth_${title.replace(/\s+/g, '_')}`;
+    sessionStorage.removeItem(sessionKey);
     setIsAuthenticated(false);
   };
 
@@ -50,7 +58,6 @@ export default function PinGate({ children, title = 'Staff Access Required' }: P
     );
   }
 
-  // If not logged in, show lock screen
   if (!isAuthenticated) {
     return (
       <main className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center p-4">
@@ -97,7 +104,6 @@ export default function PinGate({ children, title = 'Staff Access Required' }: P
     );
   }
 
-  // If authenticated, render protected page with a small Logout button
   return (
     <>
       <div className="fixed top-3 right-3 z-50 print:hidden">
