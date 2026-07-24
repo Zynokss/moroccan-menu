@@ -1,0 +1,579 @@
+'use client';
+
+import { useEffect, useState, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { supabase } from '@/app/lib/supabase';
+import { saveClientOrder } from '@/app/lib/orderStorage';
+import Link from 'next/link';
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  is_available: boolean;
+  image_url?: string;
+}
+
+interface CartItem extends MenuItem {
+  quantity: number;
+}
+
+type Language = 'ar' | 'en';
+
+const TRANSLATIONS = {
+  ar: {
+    restaurantName: 'شواية بن ديان',
+    subTitle: 'مشاوي على الفحم - طعم الأصالة والجودة',
+    table: 'طاولة',
+    noTable: 'لم يتم تحديد طاولة',
+    categories: 'الأقسام',
+    searchPlaceholder: 'ابحث عن وجبة أو مكونات...',
+    freshAndHot: 'طازج وساخن',
+    heroTitle: 'شهية طيبة! اختر وجبتك المفضلة',
+    heroSub: 'سيتم ارسال طلبك مباشرة إلى المطبخ بكل سرعة وسهولة',
+    itemsCount: 'وجبة',
+    noDishes: 'لا توجد وجبات متاحة',
+    noDishesSub: 'جرب اختيار قسم آخر أو تغيير كلمة البحث',
+    add: '+ إضافة',
+    myOrder: 'طلبي',
+    tableNumLabel: 'رقم الطاولة *',
+    nameLabel: 'الاسم (اختياري)',
+    notesLabel: 'ملاحظات للمطبخ',
+    notesPlaceholder: 'بدون بصل، حار جداً...',
+    total: 'المجموع الإجمالي:',
+    confirmOrder: 'تأكيد إرسال الطلب',
+    sendingOrder: 'جاري الإرسال...',
+    emptyCart: 'سلة الطلبات فارغة',
+    emptyCartSub: 'اضغط على "+ إضافة" للبدء',
+    orderConfirmed: 'تم استلام طلبك بنجاح!',
+    orderConfirmedSub: 'شكراً لك! يتم الآن تحضير طلبك للطاولة رقم',
+    orderMore: 'طلب المزيد من الوجبات',
+    priceUnit: 'درهم',
+    myActiveOrders: 'الطلبات الجارية',
+  },
+  en: {
+    restaurantName: 'Chawayat Bin Diyan',
+    subTitle: 'Charcoal Grills - Authentic Taste & Quality',
+    table: 'Table',
+    noTable: 'No Table Selected',
+    categories: 'Categories',
+    searchPlaceholder: 'Search for dishes or ingredients...',
+    freshAndHot: 'Fresh & Hot',
+    heroTitle: 'Craving Something Delicious?',
+    heroSub: 'Select your favorite items and send your order straight to the kitchen!',
+    itemsCount: 'items',
+    noDishes: 'No dishes found',
+    noDishesSub: 'Try selecting a different category or clearing your search.',
+    add: '+ Add',
+    myOrder: 'My Order',
+    tableNumLabel: 'Table Number *',
+    nameLabel: 'Your Name (Optional)',
+    notesLabel: 'Kitchen Notes',
+    notesPlaceholder: 'No onions, extra spicy...',
+    total: 'Total:',
+    confirmOrder: 'Confirm Order',
+    sendingOrder: 'Sending Order...',
+    emptyCart: 'Your order is empty',
+    emptyCartSub: 'Click "+ Add" on any item to start',
+    orderConfirmed: 'Order Confirmed!',
+    orderConfirmedSub: 'Thank you! Your order is being prepared for Table',
+    orderMore: 'Order More Items',
+    priceUnit: 'MAD',
+    myActiveOrders: 'Active Orders',
+  },
+};
+
+const CATEGORY_ICONS: Record<string, string> = {
+  الكل: '🍽️',
+  المشاوي: '🥩',
+  الطواجن: '🍲',
+  السندويشات: '🥪',
+  تاكوس: '🌮',
+  البرغر: '🍔',
+  الشاورما: '🌯',
+  الشاي: '🫖',
+  المشروبات: '🥤',
+};
+
+function MenuContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const tableParam = searchParams.get('table');
+
+  const [lang, setLang] = useState<Language>('ar');
+  const t = TRANSLATIONS[lang];
+
+  const [tableNumber, setTableNumber] = useState<string>('');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [customerName, setCustomerName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (tableParam) setTableNumber(tableParam);
+
+    async function fetchMenu() {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('*')
+        .eq('is_available', true)
+        .order('created_at', { ascending: true });
+
+      if (error) console.error('Error loading menu:', error);
+      if (data) setMenuItems(data);
+      setLoading(false);
+    }
+
+    fetchMenu();
+  }, [tableParam]);
+
+  const categories = ['الكل', ...Array.from(new Set(menuItems.map((i) => i.category)))];
+
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCategory = selectedCategory === 'الكل' || item.category === selectedCategory;
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const addToCart = (item: MenuItem) => {
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === item.id);
+      if (existing) {
+        return prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (id: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = item.quantity + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handlePlaceOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tableNumber) {
+      alert(lang === 'ar' ? 'يرجى إدخال رقم الطاولة!' : 'Please enter table number!');
+      return;
+    }
+    if (cart.length === 0) {
+      alert(lang === 'ar' ? 'السلة فارغة!' : 'Your cart is empty!');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          table_number: tableNumber,
+          customer_name: customerName || null,
+          notes: notes || null,
+          total_amount: totalAmount,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      const orderItemsToInsert = cart.map((item) => ({
+        order_id: orderData.id,
+        menu_item_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
+      if (itemsError) throw itemsError;
+
+      // 1. Save active order to client's local storage
+      saveClientOrder(orderData.id);
+
+      // 2. Clear local form states
+      setCart([]);
+      setNotes('');
+
+      // 3. Redirect to live order status tracker page
+      router.push(`/order/${orderData.id}`);
+
+      // Fallback redirection in case router.push experiences client-side delays
+      setTimeout(() => {
+        if (window.location.pathname === '/') {
+          window.location.href = `/order/${orderData.id}`;
+        }
+      }, 500);
+
+    } catch (err) {
+      console.error('Failed to submit order:', err);
+      alert('حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.');
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-sm font-medium tracking-wide text-zinc-400">جاري تحميل القائمة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 lg:pb-0 selection:bg-amber-500 selection:text-zinc-950" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-zinc-950 font-black text-2xl shadow-md">
+            🔥
+          </div>
+          <div>
+            <h1 className="text-lg font-black tracking-tight text-white leading-none">
+              {t.restaurantName}
+            </h1>
+            <p className="text-[10px] text-amber-500/90 font-medium mt-0.5">{t.subTitle}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-3 space-x-reverse">
+          {/* Language Selector */}
+          <button
+            onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+            className="text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-amber-400 px-3 py-1.5 rounded-xl transition-colors"
+          >
+            {lang === 'ar' ? 'English 🌐' : 'العربية 🌐'}
+          </button>
+
+          {tableNumber ? (
+            <div className="flex items-center space-x-2 space-x-reverse bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <span className="text-xs font-semibold text-zinc-300">{t.table}</span>
+              <span className="text-sm font-black text-amber-400">#{tableNumber}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl">
+              {t.noTable}
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Main Dashboard Layout */}
+      <div className="max-w-[1600px] mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* COLUMN 1: Sidebar Categories */}
+        <aside className="lg:col-span-2 space-y-4">
+          <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3 backdrop-blur-sm lg:sticky lg:top-20">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 px-3 py-2">
+              {t.categories}
+            </p>
+            <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible gap-1.5 pb-2 lg:pb-0 scrollbar-none">
+              {categories.map((cat) => {
+                const isActive = selectedCategory === cat;
+                const icon = CATEGORY_ICONS[cat] || '🍽️';
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`flex items-center space-x-3 space-x-reverse px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 lg:w-full ${
+                      isActive
+                        ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                    }`}
+                  >
+                    <span className="text-base">{icon}</span>
+                    <span className="whitespace-nowrap">{cat}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
+        {/* COLUMN 2: Central Feed */}
+        <section className="lg:col-span-7 space-y-6">
+          
+          {/* Search Bar */}
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.searchPlaceholder}
+              className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pr-11 pl-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors shadow-sm"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+          </div>
+
+          {/* Banner Promo */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/40 border border-zinc-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="space-y-1.5 text-center sm:text-right z-10">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                {t.freshAndHot}
+              </span>
+              <h2 className="text-xl font-extrabold text-white">{t.heroTitle}</h2>
+              <p className="text-xs text-zinc-400 max-w-sm">{t.heroSub}</p>
+            </div>
+            <div className="shrink-0 z-10">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-3xl shadow-inner">
+                🥩
+              </div>
+            </div>
+          </div>
+
+          {/* Dish Grid */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <span>{CATEGORY_ICONS[selectedCategory] || '🍽️'}</span>
+                <span>{selectedCategory}</span>
+              </h3>
+              <span className="text-xs font-mono text-zinc-500">
+                {filteredItems.length} {t.itemsCount}
+              </span>
+            </div>
+
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30">
+                <p className="text-3xl mb-2">🔎</p>
+                <p className="text-sm font-semibold text-zinc-400">{t.noDishes}</p>
+                <p className="text-xs text-zinc-600 mt-1">{t.noDishesSub}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-black/50"
+                  >
+                    <div>
+                      {/* Image Preview */}
+                      <div className="relative h-44 w-full bg-zinc-950 overflow-hidden">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600">
+                            <span className="text-3xl mb-1">🥩</span>
+                            <span className="text-[10px]">شواية بن ديان</span>
+                          </div>
+                        )}
+                        <span className="absolute top-3 right-3 bg-zinc-950/80 backdrop-blur-md text-zinc-300 text-[10px] font-mono px-2.5 py-0.5 rounded-full border border-zinc-800">
+                          {item.category}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <h4 className="font-bold text-base text-white group-hover:text-amber-400 transition-colors">
+                          {item.name}
+                        </h4>
+                        <p className="text-xs text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Price and Add Button */}
+                    <div className="px-4 pb-4 pt-1 flex items-center justify-between border-t border-zinc-800/50 mt-2">
+                      <div>
+                        <span className="text-base font-extrabold text-amber-500">
+                          {item.price.toFixed(2)} <span className="text-xs font-semibold">{t.priceUnit}</span>
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => addToCart(item)}
+                        className="bg-zinc-800 hover:bg-amber-500 text-zinc-200 hover:text-zinc-950 font-extrabold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1 shadow-md"
+                      >
+                        <span>{t.add}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* COLUMN 3: Right Sticky Live Order Panel */}
+        <aside className="lg:col-span-3">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 sticky top-20 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <h3 className="font-extrabold text-white text-base flex items-center space-x-2 space-x-reverse">
+                <span>🛒</span>
+                <span>{t.myOrder}</span>
+              </h3>
+              <span className="text-xs font-mono bg-zinc-800 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">
+                {cart.reduce((a, c) => a + c.quantity, 0)}
+              </span>
+            </div>
+
+            <form onSubmit={handlePlaceOrder} className="mt-4 space-y-4">
+              {!tableParam && (
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                    {t.tableNumLabel}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    placeholder="مثلاً: 5"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  {t.nameLabel}
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="الاسم"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Cart Items List */}
+              <div className="my-3 max-h-60 overflow-y-auto space-y-2.5 pl-1 border-t border-b border-zinc-800/80 py-3 scrollbar-thin">
+                {cart.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-2xl mb-1 opacity-50">🛒</p>
+                    <p className="text-xs text-zinc-500 font-medium">{t.emptyCart}</p>
+                    <p className="text-[10px] text-zinc-600 mt-0.5">{t.emptyCartSub}</p>
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between text-xs bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/50"
+                    >
+                      <div className="pl-2 min-w-0 flex-1">
+                        <p className="font-bold text-white truncate">{item.name}</p>
+                        <p className="text-[10px] text-amber-500 font-mono mt-0.5">
+                          {(item.price * item.quantity).toFixed(2)} {t.priceUnit}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5 space-x-reverse bg-zinc-900 border border-zinc-800 rounded-lg p-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white font-bold bg-zinc-800 rounded hover:bg-zinc-700 transition-colors"
+                        >
+                          -
+                        </button>
+                        <span className="w-4 text-center font-bold text-amber-400 text-xs">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white font-bold bg-zinc-800 rounded hover:bg-zinc-700 transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  {t.notesLabel}
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={t.notesPlaceholder}
+                  rows={2}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-3 text-sm">
+                  <span className="text-zinc-400 font-semibold">{t.total}</span>
+                  <span className="text-lg font-black text-amber-500">
+                    {totalAmount.toFixed(2)} {t.priceUnit}
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || cart.length === 0}
+                  className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-zinc-950 font-black py-3.5 text-xs tracking-wide uppercase transition-all shadow-lg shadow-amber-500/10"
+                >
+                  {isSubmitting ? t.sendingOrder : t.confirmOrder}
+                </button>
+              </div>
+            </form>
+          </div>
+        </aside>
+
+      </div>
+
+      {/* Floating Bottom Navigation for Mobile */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-6 py-2.5 flex justify-around items-center z-50">
+        <Link href="/" className="flex flex-col items-center text-amber-500 text-xs font-bold">
+          <span className="text-lg">🍽️</span>
+          <span>القائمة</span>
+        </Link>
+        <Link href="/orders" className="flex flex-col items-center text-zinc-400 hover:text-amber-500 text-xs font-bold transition-colors">
+          <span className="text-lg">⏳</span>
+          <span>{t.myActiveOrders}</span>
+        </Link>
+      </nav>
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
+          <p className="animate-pulse text-sm font-medium">شواية بن ديان...</p>
+        </div>
+      }
+    >
+      <MenuContent />
+    </Suspense>
+  );
+}
