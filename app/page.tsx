@@ -111,7 +111,7 @@ const getCategoryIcon = (categoryName: string): string => {
   return '🍽️';
 };
 
-const RESTAURANT_PHONE = '212639444163'; // Your WhatsApp phone number[cite: 2]
+const RESTAURANT_PHONE = '212762487466'; // Your WhatsApp phone number[cite: 2]
 
 function getWhatsAppLink(
   tableNumber: string,
