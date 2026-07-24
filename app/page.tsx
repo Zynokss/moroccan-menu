@@ -52,6 +52,8 @@ const TRANSLATIONS = {
     orderMore: 'طلب المزيد من الوجبات',
     priceUnit: 'درهم',
     myActiveOrders: 'الطلبات الجارية',
+    viewCart: 'عرض السلة',
+    close: 'إغلاق ✕',
   },
   en: {
     restaurantName: 'Chawayat Bin Diyan',
@@ -82,6 +84,8 @@ const TRANSLATIONS = {
     orderMore: 'Order More Items',
     priceUnit: 'MAD',
     myActiveOrders: 'Active Orders',
+    viewCart: 'View Order',
+    close: 'Close ✕',
   },
 };
 
@@ -114,6 +118,7 @@ function MenuContent() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false); // Mobile cart pop-up toggle
 
   useEffect(() => {
     if (tableParam) setTableNumber(tableParam);
@@ -151,6 +156,7 @@ function MenuContent() {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
+    setIsCartOpen(true); // Open mobile cart sheet when an item is added
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -168,6 +174,7 @@ function MenuContent() {
   };
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalCartCount = cart.reduce((a, c) => a + c.quantity, 0);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,17 +214,14 @@ function MenuContent() {
       const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
       if (itemsError) throw itemsError;
 
-      // 1. Save active order to client's local storage
       saveClientOrder(orderData.id);
 
-      // 2. Clear local form states
       setCart([]);
       setNotes('');
+      setIsCartOpen(false);
 
-      // 3. Redirect to live order status tracker page
       router.push(`/order/${orderData.id}`);
 
-      // Fallback redirection in case router.push experiences client-side delays
       setTimeout(() => {
         if (window.location.pathname === '/') {
           window.location.href = `/order/${orderData.id}`;
@@ -243,7 +247,7 @@ function MenuContent() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 lg:pb-0 selection:bg-amber-500 selection:text-zinc-950" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-28 lg:pb-0 selection:bg-amber-500 selection:text-zinc-950" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 lg:px-8 py-3.5 flex items-center justify-between">
         <div className="flex items-center space-x-3 space-x-reverse">
@@ -259,7 +263,6 @@ function MenuContent() {
         </div>
 
         <div className="flex items-center space-x-3 space-x-reverse">
-          {/* Language Selector */}
           <button
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
             className="text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-amber-400 px-3 py-1.5 rounded-xl transition-colors"
@@ -319,8 +322,6 @@ function MenuContent() {
 
         {/* COLUMN 2: Central Feed */}
         <section className="lg:col-span-7 space-y-6">
-          
-          {/* Search Bar */}
           <div className="relative">
             <input
               type="text"
@@ -332,7 +333,6 @@ function MenuContent() {
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
           </div>
 
-          {/* Banner Promo */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-amber-950/40 border border-zinc-800 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
             <div className="space-y-1.5 text-center sm:text-right z-10">
               <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -348,7 +348,6 @@ function MenuContent() {
             </div>
           </div>
 
-          {/* Dish Grid */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -374,7 +373,6 @@ function MenuContent() {
                     className="group bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-black/50"
                   >
                     <div>
-                      {/* Image Preview */}
                       <div className="relative h-44 w-full bg-zinc-950 overflow-hidden">
                         {item.image_url ? (
                           <img
@@ -393,7 +391,6 @@ function MenuContent() {
                         </span>
                       </div>
 
-                      {/* Content */}
                       <div className="p-4">
                         <h4 className="font-bold text-base text-white group-hover:text-amber-400 transition-colors">
                           {item.name}
@@ -404,7 +401,6 @@ function MenuContent() {
                       </div>
                     </div>
 
-                    {/* Price and Add Button */}
                     <div className="px-4 pb-4 pt-1 flex items-center justify-between border-t border-zinc-800/50 mt-2">
                       <div>
                         <span className="text-base font-extrabold text-amber-500">
@@ -413,8 +409,9 @@ function MenuContent() {
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => addToCart(item)}
-                        className="bg-zinc-800 hover:bg-amber-500 text-zinc-200 hover:text-zinc-950 font-extrabold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1 shadow-md"
+                        className="bg-zinc-800 hover:bg-amber-500 text-zinc-200 hover:text-zinc-950 font-extrabold px-3.5 py-2 rounded-xl text-xs transition-all flex items-center space-x-1 shadow-md active:scale-95 select-none"
                       >
                         <span>{t.add}</span>
                       </button>
@@ -426,8 +423,8 @@ function MenuContent() {
           </div>
         </section>
 
-        {/* COLUMN 3: Right Sticky Live Order Panel */}
-        <aside className="lg:col-span-3">
+        {/* COLUMN 3: Right Desktop Sticky Live Order Panel */}
+        <aside className="hidden lg:block lg:col-span-3">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 sticky top-20 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <h3 className="font-extrabold text-white text-base flex items-center space-x-2 space-x-reverse">
@@ -435,7 +432,7 @@ function MenuContent() {
                 <span>{t.myOrder}</span>
               </h3>
               <span className="text-xs font-mono bg-zinc-800 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">
-                {cart.reduce((a, c) => a + c.quantity, 0)}
+                {totalCartCount}
               </span>
             </div>
 
@@ -469,7 +466,6 @@ function MenuContent() {
                 />
               </div>
 
-              {/* Cart Items List */}
               <div className="my-3 max-h-60 overflow-y-auto space-y-2.5 pl-1 border-t border-b border-zinc-800/80 py-3 scrollbar-thin">
                 {cart.length === 0 ? (
                   <div className="py-8 text-center">
@@ -549,8 +545,157 @@ function MenuContent() {
 
       </div>
 
+      {/* MOBILE: Sticky Quick Cart Trigger Bar */}
+      {totalCartCount > 0 && !isCartOpen && (
+        <div className="lg:hidden fixed bottom-16 left-4 right-4 z-40">
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="w-full bg-gradient-to-r from-amber-500 to-amber-400 text-zinc-950 font-black py-3.5 px-5 rounded-2xl shadow-xl flex items-center justify-between active:scale-[0.98] transition-all border border-amber-300/30"
+          >
+            <div className="flex items-center gap-3">
+              <span className="bg-zinc-950 text-amber-400 min-w-6 h-6 px-1.5 rounded-full flex items-center justify-center text-xs font-extrabold">
+                {totalCartCount}
+              </span>
+              <span className="text-sm">{t.viewCart}</span>
+            </div>
+            <span className="text-sm font-extrabold">{totalAmount.toFixed(2)} {t.priceUnit}</span>
+          </button>
+        </div>
+      )}
+
+      {/* MOBILE: Slide-up Cart Drawer Sheet */}
+      {isCartOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full bg-zinc-900 border-t border-zinc-800 rounded-t-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col justify-between overflow-hidden">
+            
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+                <span>🛒</span>
+                <span>{t.myOrder}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(false)}
+                className="text-xs font-bold text-zinc-400 hover:text-white bg-zinc-800 px-3 py-1.5 rounded-xl"
+              >
+                {t.close}
+              </button>
+            </div>
+
+            {/* Drawer Content Form */}
+            <form onSubmit={handlePlaceOrder} className="flex-1 overflow-y-auto my-3 space-y-4 pr-1">
+              {!tableParam && (
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                    {t.tableNumLabel}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    placeholder="مثلاً: 5"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  {t.nameLabel}
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="الاسم"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-2 max-h-48 overflow-y-auto border-t border-b border-zinc-800 py-3">
+                {cart.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-xl mb-1 opacity-50">🛒</p>
+                    <p className="text-xs text-zinc-500 font-medium">{t.emptyCart}</p>
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between text-xs bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80"
+                    >
+                      <div className="pl-2 min-w-0 flex-1">
+                        <p className="font-bold text-white truncate">{item.name}</p>
+                        <p className="text-[10px] text-amber-500 font-mono mt-0.5">
+                          {(item.price * item.quantity).toFixed(2)} {t.priceUnit}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-1.5 space-x-reverse bg-zinc-900 border border-zinc-800 rounded-lg p-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="w-6 h-6 flex items-center justify-center text-zinc-300 hover:text-white font-bold bg-zinc-800 rounded hover:bg-zinc-700 active:scale-95"
+                        >
+                          -
+                        </button>
+                        <span className="w-5 text-center font-bold text-amber-400 text-xs">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="w-6 h-6 flex items-center justify-center text-zinc-300 hover:text-white font-bold bg-zinc-800 rounded hover:bg-zinc-700 active:scale-95"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  {t.notesLabel}
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={t.notesPlaceholder}
+                  rows={2}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-3 text-sm">
+                  <span className="text-zinc-400 font-semibold">{t.total}</span>
+                  <span className="text-lg font-black text-amber-500">
+                    {totalAmount.toFixed(2)} {t.priceUnit}
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || cart.length === 0}
+                  className="w-full rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-zinc-950 font-black py-3.5 text-xs tracking-wide uppercase transition-all shadow-lg active:scale-98"
+                >
+                  {isSubmitting ? t.sendingOrder : t.confirmOrder}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
+
       {/* Floating Bottom Navigation for Mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-6 py-2.5 flex justify-around items-center z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-6 py-2.5 flex justify-around items-center z-40">
         <Link href="/" className="flex flex-col items-center text-amber-500 text-xs font-bold">
           <span className="text-lg">🍽️</span>
           <span>القائمة</span>
