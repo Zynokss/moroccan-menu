@@ -1,6 +1,6 @@
 # Moroccan Restaurant Digital Menu & Live Ordering System
 
-> A modern, full-stack digital menu and real-time ordering application built for a local restaurant (Chawayat Bin Diyan / شواية بن ديان). Designed for seamless table-side ordering via QR codes with real-time kitchen tracking.
+> A modern, full-stack digital menu and real-time ordering application built for a local restaurant. Designed for seamless table-side ordering via QR codes with real-time kitchen tracking.
 
 ---
 
