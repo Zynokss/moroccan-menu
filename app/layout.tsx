@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "شاشة المطبخ",
-  description: "نظام إدارة الطلبات للمطبخ",
+  title: "شواية بن ديبان",
+  description: "قائمة الطعام والطلبات المباشرةy",
 };
 
 export default function RootLayout({
