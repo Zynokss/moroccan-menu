@@ -24,7 +24,7 @@ type Language = 'ar' | 'en';
 
 const TRANSLATIONS = {
   ar: {
-    restaurantName: 'شواية بن ديان',
+    restaurantName: 'شواية بن ديبان',
     subTitle: 'مشاوي على الفحم - طعم الأصالة والجودة',
     table: 'طاولة',
     noTable: 'لم يتم تحديد طاولة',
@@ -89,16 +89,25 @@ const TRANSLATIONS = {
   },
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  الكل: '🍽️',
-  المشاوي: '🥩',
-  الطواجن: '🍲',
-  السندويشات: '🥪',
-  تاكوس: '🌮',
-  البرغر: '🍔',
-  الشاورما: '🌯',
-  الشاي: '🫖',
-  المشروبات: '🥤',
+// Dynamic helper to match category names from database to emojis
+const getCategoryIcon = (categoryName: string): string => {
+  const name = categoryName.toLowerCase();
+
+  if (name === 'الكل' || name === 'all') return '🍽️';
+  if (name.includes('مشاوي') || name.includes('فحم') || name.includes('grill')) return '🔥';
+  if (name.includes('طاجن') || name.includes('طواجن') || name.includes('tajine')) return '🍲';
+  if (name.includes('سندويش') || name.includes('sandwich')) return '🥪';
+  if (name.includes('تاكوس') || name.includes('tacos')) return '🌮';
+  if (name.includes('برغر') || name.includes('burger')) return '🍔';
+  if (name.includes('شاورما') || name.includes('shawarma')) return '🌯';
+  if (name.includes('سلط') || name.includes('salad')) return '🥗';
+  if (name.includes('مقل') || name.includes('إضافات') || name.includes('fries') || name.includes('sides')) return '🍟';
+  if (name.includes('شاي') || name.includes('tea')) return '🫖';
+  if (name.includes('مشروب') || name.includes('عصير') || name.includes('drink') || name.includes('beverage')) return '🥤';
+  if (name.includes('حلو') || name.includes('dessert')) return '🍰';
+  if (name.includes('بيتزا') || name.includes('pizza')) return '🍕';
+
+  return '🍽️';
 };
 
 function MenuContent() {
@@ -118,7 +127,7 @@ function MenuContent() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false); // Mobile cart pop-up toggle
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     if (tableParam) setTableNumber(tableParam);
@@ -138,7 +147,8 @@ function MenuContent() {
     fetchMenu();
   }, [tableParam]);
 
-  const categories = ['الكل', ...Array.from(new Set(menuItems.map((i) => i.category)))];
+  // Dynamically extract unique categories directly from the database menu items
+  const categories = ['الكل', ...Array.from(new Set(menuItems.map((i) => i.category).filter(Boolean)))];
 
   const filteredItems = menuItems.filter((item) => {
     const matchesCategory = selectedCategory === 'الكل' || item.category === selectedCategory;
@@ -156,7 +166,7 @@ function MenuContent() {
       }
       return [...prev, { ...item, quantity: 1 }];
     });
-    setIsCartOpen(true); // Open mobile cart sheet when an item is added
+    setIsCartOpen(true);
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -299,7 +309,7 @@ function MenuContent() {
             <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible gap-1.5 pb-2 lg:pb-0 scrollbar-none">
               {categories.map((cat) => {
                 const isActive = selectedCategory === cat;
-                const icon = CATEGORY_ICONS[cat] || '🍽️';
+                const icon = getCategoryIcon(cat);
 
                 return (
                   <button
@@ -351,7 +361,7 @@ function MenuContent() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <span>{CATEGORY_ICONS[selectedCategory] || '🍽️'}</span>
+                <span>{getCategoryIcon(selectedCategory)}</span>
                 <span>{selectedCategory}</span>
               </h3>
               <span className="text-xs font-mono text-zinc-500">
@@ -383,7 +393,7 @@ function MenuContent() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600">
                             <span className="text-3xl mb-1">🥩</span>
-                            <span className="text-[10px]">شواية بن ديان</span>
+                            <span className="text-[10px]">شواية بن ديبان</span>
                           </div>
                         )}
                         <span className="absolute top-3 right-3 bg-zinc-950/80 backdrop-blur-md text-zinc-300 text-[10px] font-mono px-2.5 py-0.5 rounded-full border border-zinc-800">
@@ -714,7 +724,7 @@ export default function Home() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
-          <p className="animate-pulse text-sm font-medium">شواية بن ديان...</p>
+          <p className="animate-pulse text-sm font-medium">شواية بن ديبان...</p>
         </div>
       }
     >
