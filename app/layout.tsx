@@ -1,36 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Tajawal } from 'next/font/google';
+import { Providers } from './providers';
+import './globals.css';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const tajawal = Tajawal({
+  subsets: ['arabic', 'latin'],
+  weight: ['300', '400', '500', '700', '800', '900'],
+  variable: '--font-tajawal',
 });
 
 export const metadata: Metadata = {
-  title: "شواية بن ديبان",
-  description: "قائمة الطعام والطلبات المباشرةy",
+  title: 'شواية بن ديبان',
+  description: 'مشاوي على الفحم',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="ar"
-      dir="rtl"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+    <html lang="ar" dir="rtl" className={tajawal.variable} suppressHydrationWarning>
+      <body 
+        className="font-sans antialiased min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors"
+        suppressHydrationWarning
+      >
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/app/lib/supabase';
 import { saveClientOrder } from '@/app/lib/orderStorage';
 import Link from 'next/link';
+import { ThemeToggle } from '@/app/components/ThemeToggle';
 
 interface MenuItem {
   id: string;
@@ -89,7 +90,8 @@ const TRANSLATIONS = {
   },
 };
 
-const HERO_BANNER_IMAGE = 'https://tmpmhcfljtkwivclkdbc.supabase.co/storage/v1/object/public/menu-images/banner.jpg'; // 👈 Background image URL[cite: 2]
+const HERO_BANNER_IMAGE = 'https://tmpmhcfljtkwivclkdbc.supabase.co/storage/v1/object/public/menu-images/banner.jpg';
+const RESTAURANT_PHONE = '212762487466';
 
 const getCategoryIcon = (categoryName: string): string => {
   const name = categoryName.toLowerCase();
@@ -110,8 +112,6 @@ const getCategoryIcon = (categoryName: string): string => {
 
   return '🍽️';
 };
-
-const RESTAURANT_PHONE = '212762487466'; // Your WhatsApp phone number[cite: 2]
 
 function getWhatsAppLink(
   tableNumber: string,
@@ -284,10 +284,10 @@ function MenuContent() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-28 lg:pb-0 selection:bg-amber-500 selection:text-zinc-950 flex flex-col justify-between" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 pb-28 lg:pb-0 transition-colors duration-200">
       <div>
         {/* Top Navbar */}
-        <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <header className="sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md px-4 lg:px-8 py-3.5 flex items-center justify-between transition-colors">
           <div className="flex items-center space-x-3 space-x-reverse">
             <div className="w-10 h-10 rounded-2xl border border-amber-500/40 bg-zinc-900 overflow-hidden shadow-md flex items-center justify-center">
               <img 
@@ -297,7 +297,7 @@ function MenuContent() {
               />
             </div>
             <div>
-              <h1 className="text-lg font-black tracking-tight text-white leading-none">
+              <h1 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white leading-none">
                 {t.restaurantName}
               </h1>
               <p className="text-[10px] text-amber-500/90 font-medium mt-0.5">{t.subTitle}</p>
@@ -305,24 +305,24 @@ function MenuContent() {
           </div>
 
           <div className="flex items-center space-x-3 space-x-reverse">
+            <ThemeToggle />
             <button
-              onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-              className="text-xs font-bold bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-amber-400 px-3 py-1.5 rounded-xl transition-colors"
-            >
+               onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+               className="text-xs font-bold bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 px-3 py-1.5 rounded-xl transition-colors"
+               >
               {lang === 'ar' ? 'English 🌐' : 'العربية 🌐'}
             </button>
-
             {tableNumber ? (
               <div className="flex items-center space-x-2 space-x-reverse bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
-                <span className="text-xs font-semibold text-zinc-300">{t.table}</span>
-                <span className="text-sm font-black text-amber-400">#{tableNumber}</span>
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">{t.table}</span>
+                <span className="text-sm font-black text-amber-500 dark:text-amber-400">#{tableNumber}</span>
               </div>
             ) : (
-              <div className="text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl">
+              <div className="text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-3 py-1.5 rounded-xl">
                 {t.noTable}
               </div>
             )}
@@ -334,7 +334,7 @@ function MenuContent() {
           
           {/* COLUMN 1: Sidebar Categories */}
           <aside className="lg:col-span-2 space-y-4">
-            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3 backdrop-blur-sm lg:sticky lg:top-20">
+            <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-3 backdrop-blur-sm lg:sticky lg:top-20 shadow-sm transition-colors">
               <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 px-3 py-2">
                 {t.categories}
               </p>
@@ -347,14 +347,14 @@ function MenuContent() {
                     <button
                       key={cat}
                       onClick={() => setSelectedCategory(cat)}
-                      className={`flex items-center space-x-3 space-x-reverse px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 lg:w-full ${
+                      className={`flex items-center space-x-3 space-x-reverse px-3.5 py-2.5 rounded-xl text-sm sm:text-base font-extrabold transition-all shrink-0 lg:w-full ${
                         isActive
-                          ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
-                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
-                      }`}
+                            ? 'bg-amber-500 text-zinc-950 shadow-lg shadow-amber-500/20'
+                            : 'text-zinc-800 dark:text-zinc-100 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
+                       }`}
                     >
-                      <span className="text-base">{icon}</span>
-                      <span className="whitespace-nowrap">{cat}</span>
+                       <span className="text-base">{icon}</span>
+                       <span className="whitespace-nowrap">{cat}</span>
                     </button>
                   );
                 })}
@@ -370,9 +370,9 @@ function MenuContent() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl pr-11 pl-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors shadow-sm"
+                className="w-full bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-2xl pr-11 pl-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-amber-500 transition-colors shadow-sm"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">🔍</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 text-sm">🔍</span>
             </div>
 
             {/* CUSTOM HERO BANNER WITH BACKGROUND IMAGE */}
@@ -399,7 +399,7 @@ function MenuContent() {
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                   <span>{getCategoryIcon(selectedCategory)}</span>
                   <span>{selectedCategory}</span>
                 </h3>
@@ -409,20 +409,101 @@ function MenuContent() {
               </div>
 
               {filteredItems.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30">
+                <div className="text-center py-12 border border-dashed border-zinc-300 dark:border-zinc-800 rounded-2xl bg-zinc-100/50 dark:bg-zinc-900/30">
                   <p className="text-3xl mb-2">🔎</p>
-                  <p className="text-sm font-semibold text-zinc-400">{t.noDishes}</p>
-                  <p className="text-xs text-zinc-600 mt-1">{t.noDishesSub}</p>
+                  <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">{t.noDishes}</p>
+                  <p className="text-xs text-zinc-500 mt-1">{t.noDishesSub}</p>
+                </div>
+              ) : (selectedCategory === 'الكل' || selectedCategory === 'All') ? (
+                /* GROUPED BY CATEGORY WITH DIVIDERS FOR 'ALL' */
+                <div className="space-y-8">
+                  {categories
+                    .filter((cat) => cat !== 'الكل' && cat !== 'All')
+                    .map((cat) => {
+                      const catItems = filteredItems.filter((i) => i.category === cat);
+                      if (catItems.length === 0) return null;
+
+                      return (
+                        <div key={cat} className="space-y-4">
+                          {/* Section Header Divider */}
+                          <div className="flex items-center gap-3 pt-2">
+                            <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 px-3.5 py-1.5 rounded-xl shadow-xs">
+                              <span className="text-sm sm:text-base">{getCategoryIcon(cat)}</span>
+                              <h4 className="text-xs sm:text-sm font-black text-zinc-800 dark:text-zinc-200 uppercase tracking-wide">
+                                {cat}
+                              </h4>
+                            </div>
+                            <div className="h-[1px] flex-1 bg-gradient-to-r from-zinc-200 dark:from-zinc-800 to-transparent"></div>
+                          </div>
+
+                          {/* Category Items Grid */}
+                          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">
+                            {catItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="group bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 hover:border-amber-500/50 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-black/50"
+                              >
+                                <div>
+                                  <div className="relative h-32 sm:h-44 w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden">
+                                    {item.image_url ? (
+                                      <img
+                                        src={item.image_url}
+                                        alt={item.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600">
+                                        <span className="text-2xl sm:text-3xl mb-1">🥩</span>
+                                        <span className="text-[9px] sm:text-[10px]">شواية بن ديبان</span>
+                                      </div>
+                                    )}
+                                    <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md text-zinc-700 dark:text-zinc-300 text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800">
+                                      {item.category}
+                                    </span>
+                                  </div>
+
+                                  <div className="p-2.5 sm:p-4">
+                                    <h4 className="font-black text-base sm:text-lg text-zinc-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors line-clamp-1">
+                                      {item.name}
+                                    </h4>
+                                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-2 leading-loose">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-4 pt-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between border-t border-zinc-200/60 dark:border-zinc-800/50 mt-1">
+                                  <div>
+                                    <span className="text-base sm:text-lg font-black text-amber-500">
+                                      {item.price.toFixed(2)} <span className="text-xs sm:text-sm font-bold">{t.priceUnit}</span>
+                                    </span>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => addToCart(item)}
+                                    className="w-full sm:w-auto bg-amber-500 hover:bg-amber-400 text-zinc-950 font-extrabold px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs transition-all flex items-center justify-center space-x-1 shadow-md shadow-amber-500/10 active:scale-95 select-none"
+                                  >
+                                    <span>{t.add}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               ) : (
+                /* SINGLE CATEGORY GRID */
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">
                   {filteredItems.map((item) => (
                     <div
                       key={item.id}
-                      className="group bg-zinc-900/80 border border-zinc-800 hover:border-amber-500/50 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-black/50"
+                      className="group bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 hover:border-amber-500/50 rounded-2xl overflow-hidden flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:shadow-black/50"
                     >
                       <div>
-                        <div className="relative h-32 sm:h-44 w-full bg-zinc-950 overflow-hidden">
+                        <div className="relative h-32 sm:h-44 w-full bg-zinc-100 dark:bg-zinc-950 overflow-hidden">
                           {item.image_url ? (
                             <img
                               src={item.image_url}
@@ -430,30 +511,30 @@ function MenuContent() {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
                           ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600">
+                            <div className="w-full h-full flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-600">
                               <span className="text-2xl sm:text-3xl mb-1">🥩</span>
                               <span className="text-[9px] sm:text-[10px]">شواية بن ديبان</span>
                             </div>
                           )}
-                          <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-zinc-950/80 backdrop-blur-md text-zinc-300 text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full border border-zinc-800">
+                          <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md text-zinc-700 dark:text-zinc-300 text-[9px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800">
                             {item.category}
                           </span>
                         </div>
 
                         <div className="p-2.5 sm:p-4">
-                          <h4 className="font-bold text-sm sm:text-base text-white group-hover:text-amber-400 transition-colors line-clamp-1">
+                          <h4 className="font-black text-base sm:text-lg text-zinc-900 dark:text-white group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors line-clamp-1">
                             {item.name}
                           </h4>
-                          <p className="text-[11px] sm:text-xs text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 line-clamp-2 leading-loose">
                             {item.description}
                           </p>
                         </div>
                       </div>
 
-                      <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-4 pt-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between border-t border-zinc-800/50 mt-1">
+                      <div className="px-2.5 sm:px-4 pb-2.5 sm:pb-4 pt-1 flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between border-t border-zinc-200/60 dark:border-zinc-800/50 mt-1">
                         <div>
-                          <span className="text-sm sm:text-base font-extrabold text-amber-500">
-                            {item.price.toFixed(2)} <span className="text-[10px] sm:text-xs font-semibold">{t.priceUnit}</span>
+                          <span className="text-base sm:text-lg font-black text-amber-500">
+                            {item.price.toFixed(2)} <span className="text-xs sm:text-sm font-bold">{t.priceUnit}</span>
                           </span>
                         </div>
 
@@ -474,13 +555,13 @@ function MenuContent() {
 
           {/* COLUMN 3: Right Desktop Sticky Live Order Panel */}
           <aside className="hidden lg:block lg:col-span-3">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 sticky top-20 shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <h3 className="font-extrabold text-white text-base flex items-center space-x-2 space-x-reverse">
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 sticky top-20 shadow-md dark:shadow-2xl transition-colors">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+                <h3 className="font-extrabold text-zinc-900 dark:text-white text-base flex items-center space-x-2 space-x-reverse">
                   <span>🛒</span>
                   <span>{t.myOrder}</span>
                 </h3>
-                <span className="text-xs font-mono bg-zinc-800 text-amber-400 px-2.5 py-0.5 rounded-full font-bold">
+                <span className="text-xs font-mono bg-zinc-100 dark:bg-zinc-800 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full font-bold">
                   {totalCartCount}
                 </span>
               </div>
@@ -488,7 +569,7 @@ function MenuContent() {
               <form onSubmit={handlePlaceOrder} className="mt-4 space-y-4">
                 {!tableParam && (
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                       {t.tableNumLabel}
                     </label>
                     <input
@@ -497,13 +578,13 @@ function MenuContent() {
                       value={tableNumber}
                       onChange={(e) => setTableNumber(e.target.value)}
                       placeholder="مثلاً: 5"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     {t.nameLabel}
                   </label>
                   <input
@@ -511,45 +592,45 @@ function MenuContent() {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="الاسم"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
-                <div className="my-3 max-h-60 overflow-y-auto space-y-2.5 pl-1 border-t border-b border-zinc-800/80 py-3 scrollbar-thin">
+                <div className="my-3 max-h-60 overflow-y-auto space-y-2.5 pl-1 border-t border-b border-zinc-200 dark:border-zinc-800/80 py-3 scrollbar-thin">
                   {cart.length === 0 ? (
                     <div className="py-8 text-center">
                       <p className="text-2xl mb-1 opacity-50">🛒</p>
                       <p className="text-xs text-zinc-500 font-medium">{t.emptyCart}</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">{t.emptyCartSub}</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">{t.emptyCartSub}</p>
                     </div>
                   ) : (
                     cart.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between text-xs bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-800/50"
+                        className="flex items-center justify-between text-xs bg-zinc-50 dark:bg-zinc-950/60 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800/50"
                       >
                         <div className="pl-2 min-w-0 flex-1">
-                          <p className="font-bold text-white truncate">{item.name}</p>
+                          <p className="font-bold text-zinc-900 dark:text-white truncate">{item.name}</p>
                           <p className="text-[10px] text-amber-500 font-mono mt-0.5">
                             {(item.price * item.quantity).toFixed(2)} {t.priceUnit}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-1.5 space-x-reverse bg-zinc-900 border border-zinc-800 rounded-lg p-1 shrink-0">
+                        <div className="flex items-center space-x-1.5 space-x-reverse bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1 shrink-0">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, -1)}
-                            className="w-6 h-6 flex items-center justify-center text-amber-400 font-bold bg-amber-500/20 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 transition-colors active:scale-95"
+                            className="w-6 h-6 flex items-center justify-center text-amber-500 font-bold bg-amber-500/10 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 transition-colors active:scale-95"
                           >
                             -
                           </button>
-                          <span className="w-5 text-center font-bold text-amber-400 text-xs">
+                          <span className="w-5 text-center font-bold text-amber-500 dark:text-amber-400 text-xs">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="w-6 h-6 flex items-center justify-center text-amber-400 font-bold bg-amber-500/20 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 transition-colors active:scale-95"
+                            className="w-6 h-6 flex items-center justify-center text-amber-500 font-bold bg-amber-500/10 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 transition-colors active:scale-95"
                           >
                             +
                           </button>
@@ -560,7 +641,7 @@ function MenuContent() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     {t.notesLabel}
                   </label>
                   <textarea
@@ -568,13 +649,13 @@ function MenuContent() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t.notesPlaceholder}
                     rows={2}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-3 text-sm">
-                    <span className="text-zinc-400 font-semibold">{t.total}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400 font-semibold">{t.total}</span>
                     <span className="text-lg font-black text-amber-500">
                       {totalAmount.toFixed(2)} {t.priceUnit}
                     </span>
@@ -629,18 +710,18 @@ function MenuContent() {
         {/* MOBILE: Slide-up Cart Drawer Sheet */}
         {isCartOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex items-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full bg-zinc-900 border-t border-zinc-800 rounded-t-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col justify-between overflow-hidden">
+            <div className="w-full bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 rounded-t-3xl p-5 shadow-2xl max-h-[85vh] flex flex-col justify-between overflow-hidden">
               
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <h3 className="font-extrabold text-white text-base flex items-center gap-2">
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+                <h3 className="font-extrabold text-zinc-900 dark:text-white text-base flex items-center gap-2">
                   <span>🛒</span>
                   <span>{t.myOrder}</span>
                 </h3>
                 <button
                   type="button"
                   onClick={() => setIsCartOpen(false)}
-                  className="text-xs font-bold text-zinc-400 hover:text-white bg-zinc-800 px-3 py-1.5 rounded-xl"
+                  className="text-xs font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-xl"
                 >
                   {t.close}
                 </button>
@@ -650,7 +731,7 @@ function MenuContent() {
               <form onSubmit={handlePlaceOrder} className="flex-1 overflow-y-auto my-3 space-y-4 pr-1">
                 {!tableParam && (
                   <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                       {t.tableNumLabel}
                     </label>
                     <input
@@ -659,13 +740,13 @@ function MenuContent() {
                       value={tableNumber}
                       onChange={(e) => setTableNumber(e.target.value)}
                       placeholder="مثلاً: 5"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     {t.nameLabel}
                   </label>
                   <input
@@ -673,12 +754,12 @@ function MenuContent() {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="الاسم"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 {/* Items List */}
-                <div className="space-y-2 max-h-48 overflow-y-auto border-t border-b border-zinc-800 py-3">
+                <div className="space-y-2 max-h-48 overflow-y-auto border-t border-b border-zinc-200 dark:border-zinc-800 py-3">
                   {cart.length === 0 ? (
                     <div className="py-6 text-center">
                       <p className="text-xl mb-1 opacity-50">🛒</p>
@@ -688,30 +769,30 @@ function MenuContent() {
                     cart.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between text-xs bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-800/80"
+                        className="flex items-center justify-between text-xs bg-zinc-50 dark:bg-zinc-950/80 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800/80"
                       >
                         <div className="pl-2 min-w-0 flex-1">
-                          <p className="font-bold text-white truncate">{item.name}</p>
+                          <p className="font-bold text-zinc-900 dark:text-white truncate">{item.name}</p>
                           <p className="text-[10px] text-amber-500 font-mono mt-0.5">
                             {(item.price * item.quantity).toFixed(2)} {t.priceUnit}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-1.5 space-x-reverse bg-zinc-900 border border-zinc-800 rounded-lg p-1 shrink-0">
+                        <div className="flex items-center space-x-1.5 space-x-reverse bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1 shrink-0">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, -1)}
-                            className="w-6 h-6 flex items-center justify-center text-amber-400 font-bold bg-amber-500/20 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 active:scale-95 transition-colors"
+                            className="w-6 h-6 flex items-center justify-center text-amber-500 font-bold bg-amber-500/10 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 active:scale-95 transition-colors"
                           >
                             -
                           </button>
-                          <span className="w-5 text-center font-bold text-amber-400 text-xs">
+                          <span className="w-5 text-center font-bold text-amber-500 dark:text-amber-400 text-xs">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="w-6 h-6 flex items-center justify-center text-amber-400 font-bold bg-amber-500/20 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 active:scale-95 transition-colors"
+                            className="w-6 h-6 flex items-center justify-center text-amber-500 font-bold bg-amber-500/10 border border-amber-500/30 rounded hover:bg-amber-500 hover:text-zinc-950 active:scale-95 transition-colors"
                           >
                             +
                           </button>
@@ -722,7 +803,7 @@ function MenuContent() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1">
                     {t.notesLabel}
                   </label>
                   <textarea
@@ -730,13 +811,13 @@ function MenuContent() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t.notesPlaceholder}
                     rows={2}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-3 text-sm">
-                    <span className="text-zinc-400 font-semibold">{t.total}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400 font-semibold">{t.total}</span>
                     <span className="text-lg font-black text-amber-500">
                       {totalAmount.toFixed(2)} {t.priceUnit}
                     </span>
@@ -770,12 +851,12 @@ function MenuContent() {
         )}
 
         {/* Floating Bottom Navigation for Mobile */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur-md border-t border-zinc-800 px-6 py-2.5 flex justify-around items-center z-40">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 px-6 py-2.5 flex justify-around items-center z-40">
           <Link href="/" className="flex flex-col items-center text-amber-500 text-xs font-bold">
             <span className="text-lg">🍽️</span>
             <span>القائمة</span>
           </Link>
-          <Link href="/orders" className="flex flex-col items-center text-zinc-400 hover:text-amber-500 text-xs font-bold transition-colors">
+          <Link href="/orders" className="flex flex-col items-center text-zinc-500 hover:text-amber-500 dark:text-zinc-400 dark:hover:text-amber-500 text-xs font-bold transition-colors">
             <span className="text-lg">⏳</span>
             <span>{t.myActiveOrders}</span>
           </Link>
@@ -783,8 +864,8 @@ function MenuContent() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 border-t border-zinc-800/60 bg-zinc-950 py-6 text-center text-xs text-zinc-500">
-        <p>zyn all right reserverd 2026</p>
+      <footer className="mt-8 border-t border-zinc-200 dark:border-zinc-800/60 bg-white dark:bg-zinc-950 py-6 text-center text-xs text-zinc-500">
+        <p>zyn all right reserved 2026</p>
       </footer>
     </div>
   );
