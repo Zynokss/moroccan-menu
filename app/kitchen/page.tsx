@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase';
 import PinGate from '../components/PinGate';
 
@@ -66,7 +67,6 @@ export default function KitchenDashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         () => {
-          // Play notification chime on new incoming order
           try {
             const audio = new Audio('/notification.mp3');
             audio.play().catch(() => {});
@@ -118,7 +118,6 @@ export default function KitchenDashboard() {
     }
   };
 
-  // Helper to calculate minutes elapsed
   const getMinutesAgo = (dateString: string) => {
     const diffInMs = new Date().getTime() - new Date(dateString).getTime();
     return Math.floor(diffInMs / (1000 * 60));
@@ -155,8 +154,17 @@ export default function KitchenDashboard() {
               </p>
             </div>
 
-            {/* Filter Tabs & Live Badge */}
+            {/* Filter Tabs, POS Quick Link & Live Badge */}
             <div className="flex flex-wrap items-center gap-3">
+              {/* 🏧 POS BUTTON */}
+              <Link
+                href="/kitchen/pos"
+                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-lg shadow-amber-500/10 active:scale-95"
+              >
+                <span>🏧</span>
+                <span>نظام البيع (POS)</span>
+              </Link>
+
               <div className="bg-zinc-900 border border-zinc-800 p-1 rounded-xl flex text-xs font-medium">
                 <button
                   onClick={() => setFilter('all')}
